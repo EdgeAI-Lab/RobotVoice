@@ -16,7 +16,7 @@ import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Vibrator;
 
-import com.fhc.alarmManage.App;
+import com.fhc.robotvoice.App;
 
 public class AlarmService extends Service {
     // Time period between two vibration events

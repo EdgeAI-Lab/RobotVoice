@@ -1,13 +1,21 @@
 package com.fhc.robotvoice;
 
+
 import android.app.Activity;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
 import android.view.View;
-import android.widget.Button;
+import android.view.Window;
+import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.TextView;
 import android.widget.Toast;
 
+import com.fhc.alarmManage.Actions;
+import com.fhc.utils.JsonParser;
+import com.fhc.utils.ServiceName;
 import com.iflytek.cloud.ErrorCode;
 import com.iflytek.cloud.InitListener;
 import com.iflytek.cloud.RecognizerResult;
@@ -22,10 +30,18 @@ import com.iflytek.cloud.UnderstanderResult;
 import com.iflytek.cloud.ui.RecognizerDialog;
 import com.iflytek.cloud.ui.RecognizerDialogListener;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import at.markushi.ui.CircleButton;
+import trikita.jedux.Action;
+
 public class MainActivity extends Activity {
 
     private static final String TAG = "MainActivity";
-    private Button start;
+    private CircleButton cbStart;
+    private TextView tvTips;
+    private EditText etShow;
 
     //语音控件
     private SpeechUnderstander mSpeechUnderstander;  // 语义理解对象(语音到语义)
@@ -34,9 +50,26 @@ public class MainActivity extends Activity {
     private SpeechSynthesizer mTts;  				 // 语音合成对象
     private RecognizerDialog mIatDialog;            // 语音听写UI
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
+
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+            if (App.getState().settings().theme() == 0) {
+                setTheme(android.R.style.Theme_Holo_Light);
+            } else {
+                setTheme(android.R.style.Theme_Holo);
+            }
+        } else {
+            if (App.getState().settings().theme() == 0) {
+                setTheme(android.R.style.Theme_Material_Light);
+            } else {
+                setTheme(android.R.style.Theme_Material);
+            }
+        }
+
         setContentView(R.layout.main);
 
 
@@ -44,10 +77,28 @@ public class MainActivity extends Activity {
         setRecognizerParam();
         setTtsParam();
 
-        start = (Button) findViewById(R.id.start);
-        start.setOnClickListener(new View.OnClickListener() {
+        tvTips = (TextView) findViewById(R.id.tvTips);
+        etShow = (EditText) findViewById(R.id.etShow);
+
+        cbStart = (CircleButton) findViewById(R.id.cbStart);
+        cbStart.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+
+//                int ret = 0;
+//
+//                if(mSpeechUnderstander.isUnderstanding()){// 开始前检查状态
+//                    mSpeechUnderstander.stopUnderstanding();
+//
+//                }else {
+//                    ret = mSpeechUnderstander.startUnderstanding(mSpeechUnderstanderListener);
+//                    if(ret != 0){
+//
+////                        showTip("语义理解失败,错误码:"	+ ret);
+//                    }else {
+////                        showTip("请开始说话…");
+//                    }
+//                } // understand
 
                 mIatDialog.setParameter("asr_sch", "1");
                 mIatDialog.setParameter("nlp_version", "2.0");
@@ -56,8 +107,10 @@ public class MainActivity extends Activity {
                 mIatDialog.setListener(mRecognizerDialogListener);
                 mIatDialog.show();
 
+
             }
         });
+
     }
 
     private void initVoice() {
@@ -252,21 +305,230 @@ public class MainActivity extends Activity {
 
     /***start**********************************语音控件回调*******************************************************/
 
+
     /**
      * 听写UI监听器
      */
     private RecognizerDialogListener mRecognizerDialogListener = new RecognizerDialogListener() {
-        @Override
-        public void onResult(RecognizerResult recognizerResult, boolean b) {
 
-            String text = recognizerResult.getResultString();
-            Log.d(TAG,text);
+        private JSONObject root = null;    //获取Json整体对象
+        private String service = null;     //获取service字段
+        private JSONObject answer = null;  //获取answer字段
+        private String answerText = null;  //获取answer字段中的text字段
+        private String dateOrig = null;
+        private JSONObject weatherJsonObject = null;
+        private String textOrig = null;
+
+        public void onResult(RecognizerResult results, boolean isLast) {
+
+            if (null != results) {
+
+                final String jsonString = results.getResultString();
+
+                etShow.append(jsonString);
+
+                try {
+                    root = new JSONObject(jsonString);
+
+                    // respond code
+                    int rc = root.getInt("rc");
+
+                    switch (rc) {
+                        case 0:
+
+                            service  = root.getString("service");
+
+                            textOrig = root.getString("text");
+
+//                            etShow.append(service);
+                            showTip(service);
+
+                            break;
+
+                        case 1:
+                            showTip("无效请求");
+                            break;
+
+                        case 2:
+                            showTip("服务器内部错误");
+                            break;
+
+                        case 3:
+                            showTip("业务操作失败");
+                            break;
+
+                        case 4:
+                            showTip("文本没有匹配的服务场景");
+                            break;
+                    }
+
+
+                    switch (ServiceName.getServiceName(service)) {
+
+
+                        case schedule:
+
+                            JSONObject schSemantic = root.getJSONObject("semantic");
+                            JSONObject schSolt = schSemantic.getJSONObject("slots");
+
+                            String name = schSolt.getString("name");
+                            String content = schSolt.getString("content");
+
+
+                            JSONObject schDatatime = schSolt.getJSONObject("datetime");
+
+                            String timeOrig = schDatatime.getString("timeOrig");
+
+                            String time = schDatatime.getString("time");
+                            String a[] = time.split(":");
+
+
+                            if (textOrig.contains("闹钟")){
+
+                                mTts.startSpeaking("好的，"+"以为您"+content,null);
+                                tvTips.setText("以为您"+content);
+
+                            }else if ("reminder".equals(name)){
+
+                                mTts.startSpeaking("好的，"+timeOrig+"提醒您"+content,null);
+                                tvTips.setText(timeOrig+"提醒您"+content);
+
+                            }else if("clock".equals(name)){
+
+                                mTts.startSpeaking("好的，"+timeOrig+"叫您"+content,null);
+                                tvTips.setText(timeOrig+"叫您"+content);
+
+                            }
+
+
+                            App.dispatch(new Action<>(Actions.Alarm.ON));
+                            App.dispatch(new Action<>(Actions.Alarm.SET_AM_PM, true)); // ture is PM, false is AM
+                            App.dispatch(new Action<>(Actions.Alarm.SET_HOUR, Integer.valueOf( a[0])));
+                            App.dispatch(new Action<>(Actions.Alarm.SET_MINUTE, Integer.valueOf( a[1])));
+                            break;
+
+                        case calc:// 计算
+
+                            answer = root.getJSONObject("answer");
+                            answerText = answer.getString("text");
+                            mTts.startSpeaking(answerText, null);
+                            break;
+
+
+//                        case weather:// 天气
+//
+//                            JSONObject semantic = root.getJSONObject("semantic");  //semantic Json对象，语义理解后返回
+//
+//                            JSONObject slots = semantic.getJSONObject("slots");
+//                            // 时间
+//                            JSONObject datetime = slots.getJSONObject("datetime");  //datetime Json对象，语义理解后返回
+//                            dateOrig = datetime.getString("dateOrig");
+//
+//                            // 地点
+//                            JSONObject location = slots.getJSONObject("location");  //location Json对象，语义理解后返回
+//                            String city = location.getString("city");               //city字段，包含地点信息
+//
+//                            int ret;
+//                            if("CURRENT_CITY".equals(city)){
+//
+//                                if(mTextUnderstander.isUnderstanding()){
+//                                    mTextUnderstander.cancel();
+//                                    showTip("取消");
+//                                }else {
+//
+//                                    ret = mTextUnderstander.understandText(baiduCity+dateOrig+"天气怎么样？", textListener);
+//
+//                                    if(ret != 0)
+//                                    {
+//                                        showTip("语义理解失败,错误码:"+ ret);
+//                                    }
+//                                }
+//
+//                            }else{
+//
+//                                // 获取天气信息
+//                                JSONObject weatherData = root.getJSONObject("data");
+//                                JSONArray weatherResult = weatherData.getJSONArray("result");
+//
+//                                if("昨天".equals(dateOrig)){
+//                                    weatherJsonObject = weatherResult.getJSONObject(0);
+//                                }else if("明天".equals(dateOrig)){
+//                                    weatherJsonObject = weatherResult.getJSONObject(2);
+//                                }else if("后天".equals(dateOrig)){
+//                                    weatherJsonObject = weatherResult.getJSONObject(3);
+//                                }else if("大后天".equals(dateOrig)){
+//                                    weatherJsonObject = weatherResult.getJSONObject(4);
+//                                }else if("大大后天".equals(dateOrig)){
+//                                    weatherJsonObject = weatherResult.getJSONObject(5);
+//                                }else{
+//                                    weatherJsonObject = weatherResult.getJSONObject(1);
+//                                }
+//
+//                                // 天气
+//                                String weather = weatherJsonObject.getString("weather");
+//                                // 风力
+//                                String wind = weatherJsonObject.getString("wind");
+//                                // 温度
+//                                String tempRange = weatherJsonObject.getString("tempRange");
+//
+//                                // 播报天气
+//                                mTts.startSpeaking(city+dateOrig+weather+","+"风力："+wind+","+"温度"+tempRange, null);
+//                            }
+//
+//                            break;
+
+                        case baike:// 百科
+                            answer = root.getJSONObject("answer");
+                            answerText = answer.getString("text");
+                            mTts.startSpeaking(answerText, null);
+
+                            break;
+
+                        case datetime:// 日期
+                            answer = root.getJSONObject("answer");
+                            answerText = answer.getString("text");
+                            mTts.startSpeaking(answerText, null);
+                            break;
+
+                        case faq:// 社区问答
+                            answer = root.getJSONObject("answer");
+                            answerText = answer.getString("text");
+                            mTts.startSpeaking(answerText, null);
+                            break;
+
+                        case chat:// 聊天
+                            answer = root.getJSONObject("answer");
+                            answerText = answer.getString("text");
+                            mTts.startSpeaking(answerText, null);
+                            break;
+
+                        default:
+
+                            mTts.startSpeaking("抱歉，我没有听清楚，请再说一遍好吗", null);
+
+                            break;
+                    }
+
+                } catch (JSONException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            } else {
+                Log.d("MainActivity", "understander result:null");
+//                etShow.append("null");
+            }
+
+
+
         }
 
-        @Override
-        public void onError(SpeechError speechError) {
-
+        /**
+         * 识别回调错误.
+         */
+        public void onError(SpeechError error) {
+//            showTip(error.getPlainDescription(true));
         }
+
     };
 
 
@@ -274,6 +536,7 @@ public class MainActivity extends Activity {
      * 语义理解回调。
      */
     private SpeechUnderstanderListener mSpeechUnderstanderListener = new SpeechUnderstanderListener() {
+
         @Override
         public void onVolumeChanged(int i, byte[] bytes) {
 
@@ -306,5 +569,12 @@ public class MainActivity extends Activity {
     };
 
     /***end**********************************语音控件回调*******************************************************/
+
+
+    private void showTip(String str) {
+
+        Toast.makeText(MainActivity.this,str,Toast.LENGTH_SHORT).show();
+
+    }
 
 }

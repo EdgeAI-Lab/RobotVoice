@@ -5,7 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 
 import com.fhc.alarmManage.Actions;
-import com.fhc.alarmManage.App;
+import com.fhc.robotvoice.App;
 
 import trikita.jedux.Action;
 

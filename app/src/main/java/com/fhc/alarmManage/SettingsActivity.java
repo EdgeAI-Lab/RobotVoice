@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
 
+import com.fhc.robotvoice.App;
 import com.fhc.robotvoice.R;
 
 import trikita.jedux.Action;

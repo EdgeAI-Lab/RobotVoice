@@ -5,10 +5,67 @@
     android:layout_height="match_parent"
     tools:context="com.fhc.robotvoice.MainActivity">
 
-    <Button
-        android:id="@+id/start"
+    <EditText
+        android:id="@+id/etShow"
+        android:layout_marginTop="10dp"
+        android:layout_centerHorizontal="true"
+        android:layout_width="300dp"
+        android:layout_height="150dp"
+        android:hint="debug message"/>
+
+    <TextView
+        android:id="@+id/head"
+        android:layout_below="@id/etShow"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="start"/>
+        android:layout_centerHorizontal="true"
+        android:textSize="30sp"
+        android:text="你可以这样说\n"/>
+
+    <TextView
+        android:id="@+id/tvTips"
+        android:layout_below="@id/head"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:textSize="20sp"
+        android:text="提醒我10分钟后开会\n"/>
+
+    <TextView
+        android:id="@+id/a"
+        android:layout_width="wrap_content"
+        android:layout_below="@id/tvTips"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:textSize="20sp"
+        android:text="明天早上8点叫我起床\n"/>
+
+    <TextView
+        android:id="@+id/b"
+        android:layout_below="@id/a"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:textSize="20sp"
+        android:text="待会儿提醒我关灯\n"/>
+
+    <TextView
+        android:id="@+id/c"
+        android:layout_below="@id/b"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:textSize="20sp"
+        android:text="待会儿提醒我关灯\n"/>
+
+    <at.markushi.ui.CircleButton
+        android:id="@+id/cbStart"
+        android:layout_centerHorizontal="true"
+        android:layout_alignParentBottom="true"
+        android:layout_width="70dp"
+        android:layout_height="70dp"
+        android:src="@drawable/mic_48" />
+
+
 
 </RelativeLayout>

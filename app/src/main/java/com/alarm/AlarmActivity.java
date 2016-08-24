@@ -9,7 +9,7 @@ import android.view.Window;
 import android.view.WindowManager;
 
 import com.fhc.alarmManage.Actions;
-import com.fhc.alarmManage.App;
+import com.fhc.robotvoice.App;
 import com.ui.Theme;
 
 import trikita.anvil.RenderableView;
