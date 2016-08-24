@@ -9,12 +9,10 @@ import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.widget.EditText;
-import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.fhc.alarmManage.Actions;
-import com.fhc.utils.JsonParser;
 import com.fhc.utils.ServiceName;
 import com.iflytek.cloud.ErrorCode;
 import com.iflytek.cloud.InitListener;
@@ -32,6 +30,8 @@ import com.iflytek.cloud.ui.RecognizerDialogListener;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.util.Calendar;
 
 import at.markushi.ui.CircleButton;
 import trikita.jedux.Action;
@@ -318,6 +318,9 @@ public class MainActivity extends Activity {
         private String dateOrig = null;
         private JSONObject weatherJsonObject = null;
         private String textOrig = null;
+        private int hour;
+        private int minute;
+        private String timeOrig;
 
         public void onResult(RecognizerResult results, boolean isLast) {
 
@@ -340,7 +343,6 @@ public class MainActivity extends Activity {
 
                             textOrig = root.getString("text");
 
-//                            etShow.append(service);
                             showTip(service);
 
                             break;
@@ -377,10 +379,27 @@ public class MainActivity extends Activity {
 
                             JSONObject schDatatime = schSolt.getJSONObject("datetime");
 
-                            String timeOrig = schDatatime.getString("timeOrig");
+                            if (null == schDatatime){
 
-                            String time = schDatatime.getString("time");
-                            String a[] = time.split(":");
+                                long time=System.currentTimeMillis();
+                                final Calendar mCalendar=Calendar.getInstance();
+                                mCalendar.setTimeInMillis(time);
+                                hour = mCalendar.get(Calendar.HOUR);
+                                etShow.append(hour+"");
+                                minute = mCalendar.get(Calendar.MINUTE) + 1;
+                                etShow.append(minute+"");
+
+                            }else{
+
+                                timeOrig = schDatatime.getString("timeOrig");
+
+                                String time = schDatatime.getString("time");
+                                String a[] = time.split(":");
+                                hour = Integer.valueOf( a[0]);
+                                minute =  Integer.valueOf( a[1]);
+                            }
+
+
 
 
                             if (textOrig.contains("闹钟")){
@@ -398,13 +417,15 @@ public class MainActivity extends Activity {
                                 mTts.startSpeaking("好的，"+timeOrig+"叫您"+content,null);
                                 tvTips.setText(timeOrig+"叫您"+content);
 
+                            }else{
+                                mTts.startSpeaking("好的，待会，提醒您"+content,null);
                             }
 
 
                             App.dispatch(new Action<>(Actions.Alarm.ON));
                             App.dispatch(new Action<>(Actions.Alarm.SET_AM_PM, true)); // ture is PM, false is AM
-                            App.dispatch(new Action<>(Actions.Alarm.SET_HOUR, Integer.valueOf( a[0])));
-                            App.dispatch(new Action<>(Actions.Alarm.SET_MINUTE, Integer.valueOf( a[1])));
+                            App.dispatch(new Action<>(Actions.Alarm.SET_HOUR, hour));
+                            App.dispatch(new Action<>(Actions.Alarm.SET_MINUTE, minute));
                             break;
 
                         case calc:// 计算
