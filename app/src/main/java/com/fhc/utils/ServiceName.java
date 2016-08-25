@@ -16,7 +16,6 @@ public enum ServiceName {
 			return mServiceName;
 		}
 		
-		
 		return mServiceName;
 	}
 }
