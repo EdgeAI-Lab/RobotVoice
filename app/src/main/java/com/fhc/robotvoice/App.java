@@ -20,6 +20,8 @@ public class App extends Application{
 
     private static App instance;
 
+    public static String remindString;
+
     private Store<Action, State> store;
 
     @Override

@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.os.PowerManager;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.LinearLayout;
 
 import com.fhc.alarmManage.Actions;
 import com.fhc.robotvoice.App;
@@ -15,14 +16,25 @@ import com.ui.Theme;
 import trikita.anvil.RenderableView;
 import trikita.jedux.Action;
 
+import static trikita.anvil.BaseDSL.CENTER;
 import static trikita.anvil.BaseDSL.FILL;
 import static trikita.anvil.BaseDSL.dip;
+import static trikita.anvil.BaseDSL.layoutGravity;
 import static trikita.anvil.BaseDSL.size;
 import static trikita.anvil.BaseDSL.text;
 import static trikita.anvil.BaseDSL.textSize;
+import static trikita.anvil.BaseDSL.typeface;
+import static trikita.anvil.DSL.MATCH;
+import static trikita.anvil.DSL.WRAP;
 import static trikita.anvil.DSL.backgroundColor;
+import static trikita.anvil.DSL.button;
+import static trikita.anvil.DSL.gravity;
+import static trikita.anvil.DSL.linearLayout;
 import static trikita.anvil.DSL.onClick;
+import static trikita.anvil.DSL.orientation;
+import static trikita.anvil.DSL.padding;
 import static trikita.anvil.DSL.textColor;
+import static trikita.anvil.DSL.textView;
 
 
 public class AlarmActivity extends Activity {
@@ -47,12 +59,22 @@ public class AlarmActivity extends Activity {
 
         setContentView(new RenderableView(this) {
             public void view() {
-                Theme.materialIcon(() -> {
+
+                linearLayout(() -> {
                     size(FILL, FILL);
-                    text("\ue857"); // "alarm off"
-                    textColor(Theme.get(App.getState().settings().theme()).accentColor);
-                    textSize(dip(128));
+                    padding(dip(8));
                     backgroundColor(Theme.get(App.getState().settings().theme()).backgroundColor);
+                    orientation(LinearLayout.VERTICAL);
+
+                    textView(() -> {
+                        size(MATCH, WRAP);
+                        gravity(CENTER);
+                        layoutGravity(CENTER);
+                        textSize(dip(50));
+                        textColor(Theme.get(App.getState().settings().theme()).accentColor);
+                        text(App.remindString);
+                    });
+
                     onClick(v -> stopAlarm());
                 });
             }
@@ -78,7 +100,8 @@ public class AlarmActivity extends Activity {
     }
 
     private void stopAlarm() {
-        App.dispatch(new Action<>(Actions.Alarm.DISMISS));
+        App.dispatch(new Action<>(Actions.Alarm.DISMISS)); //turn off alarm
+        App.dispatch(new Action<>(Actions.Alarm.OFF));     //stop alarm
         finish();
     }
 }

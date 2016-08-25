@@ -5,6 +5,7 @@ import trikita.anvil.Anvil;
 import static trikita.anvil.BaseDSL.CENTER;
 import static trikita.anvil.BaseDSL.WRAP;
 import static trikita.anvil.BaseDSL.size;
+import static trikita.anvil.BaseDSL.text;
 import static trikita.anvil.BaseDSL.typeface;
 import static trikita.anvil.DSL.gravity;
 import static trikita.anvil.DSL.textView;
@@ -43,14 +44,5 @@ public enum Theme {
         } else {
             return DARK;
         }
-    }
-
-    public static void materialIcon(Anvil.Renderable r) {
-        textView(() -> {
-            size(WRAP, WRAP);
-            typeface("fonts/MaterialIcons-Regular.ttf");
-            gravity(CENTER);
-            r.view();
-        });
     }
 }

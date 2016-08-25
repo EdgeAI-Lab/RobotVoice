@@ -2,6 +2,7 @@ package com.fhc.robotvoice;
 
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
@@ -13,6 +14,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.fhc.alarmManage.Actions;
+import com.fhc.alarmManage.SettingsActivity;
 import com.fhc.utils.ServiceName;
 import com.iflytek.cloud.ErrorCode;
 import com.iflytek.cloud.InitListener;
@@ -81,34 +83,15 @@ public class MainActivity extends Activity {
         etShow = (EditText) findViewById(R.id.etShow);
 
         cbStart = (CircleButton) findViewById(R.id.cbStart);
-        cbStart.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
 
-//                int ret = 0;
-//
-//                if(mSpeechUnderstander.isUnderstanding()){// 开始前检查状态
-//                    mSpeechUnderstander.stopUnderstanding();
-//
-//                }else {
-//                    ret = mSpeechUnderstander.startUnderstanding(mSpeechUnderstanderListener);
-//                    if(ret != 0){
-//
-////                        showTip("语义理解失败,错误码:"	+ ret);
-//                    }else {
-////                        showTip("请开始说话…");
-//                    }
-//                } // understand
+        cbStart.setOnClickListener(view -> {
 
-                mIatDialog.setParameter("asr_sch", "1");
-                mIatDialog.setParameter("nlp_version", "2.0");
+            mIatDialog.setParameter("asr_sch", "1");
+            mIatDialog.setParameter("nlp_version", "2.0");
 
-                // 显示听写对话框
-                mIatDialog.setListener(mRecognizerDialogListener);
-                mIatDialog.show();
-
-
-            }
+            // 显示听写对话框
+            mIatDialog.setListener(mRecognizerDialogListener);
+            mIatDialog.show();
         });
 
     }
@@ -321,6 +304,7 @@ public class MainActivity extends Activity {
         private int hour;
         private int minute;
         private String timeOrig;
+        private String speakString;
 
         public void onResult(RecognizerResult results, boolean isLast) {
 
@@ -331,7 +315,20 @@ public class MainActivity extends Activity {
                 etShow.append(jsonString);
 
                 try {
+
                     root = new JSONObject(jsonString);
+
+                    textOrig = root.getString("text");
+
+                    etShow.append(textOrig);
+
+                    if (textOrig.contains("设置")){
+
+                        openSettings();
+                        mTts.startSpeaking("好的，以为您打开设置。",null);
+
+                        return;
+                    }
 
                     // respond code
                     int rc = root.getInt("rc");
@@ -340,8 +337,6 @@ public class MainActivity extends Activity {
                         case 0:
 
                             service  = root.getString("service");
-
-                            textOrig = root.getString("text");
 
                             showTip(service);
 
@@ -376,20 +371,21 @@ public class MainActivity extends Activity {
                             String name = schSolt.getString("name");
                             String content = schSolt.getString("content");
 
+                            App.remindString = content;
 
                             JSONObject schDatatime = schSolt.getJSONObject("datetime");
+//
+//                            if (null == schDatatime){
+//
+//                                long time=System.currentTimeMillis();
+//                                final Calendar mCalendar=Calendar.getInstance();
+//                                mCalendar.setTimeInMillis(time);
+//                                hour = mCalendar.get(Calendar.HOUR);
+//                                etShow.append(hour+"");
+//                                minute = mCalendar.get(Calendar.MINUTE) + 1;
+//                                etShow.append(minute+"");
 
-                            if (null == schDatatime){
-
-                                long time=System.currentTimeMillis();
-                                final Calendar mCalendar=Calendar.getInstance();
-                                mCalendar.setTimeInMillis(time);
-                                hour = mCalendar.get(Calendar.HOUR);
-                                etShow.append(hour+"");
-                                minute = mCalendar.get(Calendar.MINUTE) + 1;
-                                etShow.append(minute+"");
-
-                            }else{
+//                            }else{
 
                                 timeOrig = schDatatime.getString("timeOrig");
 
@@ -397,30 +393,29 @@ public class MainActivity extends Activity {
                                 String a[] = time.split(":");
                                 hour = Integer.valueOf( a[0]);
                                 minute =  Integer.valueOf( a[1]);
-                            }
-
-
-
+//                            }
 
                             if (textOrig.contains("闹钟")){
 
-                                mTts.startSpeaking("好的，"+"以为您"+content,null);
+                                speakString = "好的，"+"以为您"+content;
+
                                 tvTips.setText("以为您"+content);
 
                             }else if ("reminder".equals(name)){
 
-                                mTts.startSpeaking("好的，"+timeOrig+"提醒您"+content,null);
+                                speakString = "好的，"+timeOrig+"提醒您"+content;
+
                                 tvTips.setText(timeOrig+"提醒您"+content);
 
                             }else if("clock".equals(name)){
 
-                                mTts.startSpeaking("好的，"+timeOrig+"叫您"+content,null);
+                                speakString  = "好的，"+timeOrig+"叫您"+content;
+
                                 tvTips.setText(timeOrig+"叫您"+content);
 
-                            }else{
-                                mTts.startSpeaking("好的，待会，提醒您"+content,null);
                             }
 
+                            mTts.startSpeaking(speakString,null);
 
                             App.dispatch(new Action<>(Actions.Alarm.ON));
                             App.dispatch(new Action<>(Actions.Alarm.SET_AM_PM, true)); // ture is PM, false is AM
@@ -434,7 +429,6 @@ public class MainActivity extends Activity {
                             answerText = answer.getString("text");
                             mTts.startSpeaking(answerText, null);
                             break;
-
 
 //                        case weather:// 天气
 //
@@ -596,6 +590,10 @@ public class MainActivity extends Activity {
 
         Toast.makeText(MainActivity.this,str,Toast.LENGTH_SHORT).show();
 
+    }
+
+    public void openSettings() {
+        startActivity(new Intent(this, SettingsActivity.class));
     }
 
 }
