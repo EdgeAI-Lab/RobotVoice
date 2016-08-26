@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">RobotVoice</string>
+    <string name="app_name">VoiceAlarm</string>
     <string name="app_id">57032f50</string>
     <string name="leave_feedback">Leave feedback</string>
     <string name="settings">Settings</string>
@@ -10,6 +10,12 @@
     <string name="settings_vibration_option">Vibrate</string>
     <string name="settings_volume_increase_option">Fade-in sound</string>
     <string name="tv_start_alarm_text">Tap here\nto set alarm</string>
+    <string name="help">Help</string>
+    <string name="tip1">你可以这样说\n</string>
+    <string name="tip2">提醒我10分钟后开会\n</string>
+    <string name="tip3">明天早上8点叫我起床\n</string>
+    <string name="tip4">设置一个明天六点钟的闹钟\n</string>
+    <string name="tip5">五点钟叫杨炎起床\n</string>
 
     <string name="hour">1 hour</string>
     <string name="hours">%s hours</string>

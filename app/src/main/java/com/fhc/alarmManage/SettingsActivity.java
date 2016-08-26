@@ -2,6 +2,7 @@ package com.fhc.alarmManage;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.media.RingtoneManager;
@@ -11,6 +12,7 @@ import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
 
 import com.fhc.robotvoice.App;
+import com.fhc.robotvoice.Help;
 import com.fhc.robotvoice.R;
 
 import trikita.jedux.Action;
@@ -73,6 +75,14 @@ public class SettingsActivity extends Activity
                 }
                 App.dispatch(new Action<>(Actions.Settings.SET_THEME, themeIndex));
                 break;
+
+//            case "help":
+//
+//                Intent startIntent = new Intent(SettingsActivity.this, Help.class);
+//                startActivity(startIntent); // 启动服务
+//
+//                break;
+
         }
     }
 

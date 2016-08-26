@@ -29,4 +29,6 @@
 		android:entries="@array/settings_themes"
 		android:entryValues="@array/settings_themes_values"
 		/>
+
+
 </PreferenceScreen>

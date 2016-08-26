@@ -63,13 +63,14 @@ public class AlarmActivity extends Activity {
                 linearLayout(() -> {
                     size(FILL, FILL);
                     padding(dip(8));
+                    gravity(CENTER);
                     backgroundColor(Theme.get(App.getState().settings().theme()).backgroundColor);
                     orientation(LinearLayout.VERTICAL);
 
                     textView(() -> {
                         size(MATCH, WRAP);
                         gravity(CENTER);
-                        layoutGravity(CENTER);
+
                         textSize(dip(50));
                         textColor(Theme.get(App.getState().settings().theme()).accentColor);
                         text(App.remindString);

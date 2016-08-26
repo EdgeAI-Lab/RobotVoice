@@ -1,6 +1,7 @@
 package com.fhc.robotvoice;
 
 import android.app.Application;
+import android.content.Intent;
 
 import com.alarm.AlarmController;
 import com.alarm.PersistanceController;
@@ -18,11 +19,13 @@ import trikita.jedux.Store;
  */
 public class App extends Application{
 
-    private static App instance;
+    public static App instance;
 
     public static String remindString;
 
     private Store<Action, State> store;
+
+    public static int insignificanceCount;
 
     @Override
     public void onCreate() {

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_id">57032f50</string>
+    <string name="app_name">语音闹钟</string>
+    <string name="leave_feedback">フィードバックを残す</string>
+    <string name="settings">设置</string>
+    <string name="settings_ringtone_option">铃声</string>
+    <string name="settings_snap_option">间隔</string>
+    <string name="settings_theme_option">主题</string>
+    <string name="settings_vibration_option">震动</string>
+    <string name="settings_volume_increase_option">音量递增</string>
+    <string name="tv_start_alarm_text">Tap here\nto set alarm</string>
+
+    <string name="help">帮助</string>
+    <string name="tip1">你可以这样说\n</string>
+    <string name="tip2">提醒我10分钟后开会\n</string>
+    <string name="tip3">明天早上8点叫我起床\n</string>
+    <string name="tip4">设置一个明天六点钟的闹钟\n</string>
+    <string name="tip5">五点钟叫小明起床\n</string>
+
+
+    <string-array name="settings_themes">
+        <item>亮</item>
+        <item>暗</item>
+    </string-array>
+    <string-array name="settings_themes_values" translatable="false">
+        <item>0</item>
+        <item>1</item>
+    </string-array>
+</resources>

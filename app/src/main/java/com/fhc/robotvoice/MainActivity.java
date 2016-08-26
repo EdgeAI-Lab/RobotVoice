@@ -2,6 +2,7 @@ package com.fhc.robotvoice;
 
 
 import android.app.Activity;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
@@ -34,16 +35,20 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.Calendar;
+import java.util.Random;
 
 import at.markushi.ui.CircleButton;
 import trikita.jedux.Action;
 
 public class MainActivity extends Activity {
 
+
+    private String preSetSentence[] = {"你可以说，提醒我10分钟后开会。","需要帮助，请说我需要帮助。","想要设置软件，就说打开设置。","想要取消提醒，就说取消提醒。"};
+
     private static final String TAG = "MainActivity";
-    private CircleButton cbStart;
-    private TextView tvTips;
-    private EditText etShow;
+//    private CircleButton cbStart;
+//    private TextView tvTips;
+//    private EditText etShow;
 
     //语音控件
     private SpeechUnderstander mSpeechUnderstander;  // 语义理解对象(语音到语义)
@@ -57,42 +62,38 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
-
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-            if (App.getState().settings().theme() == 0) {
-                setTheme(android.R.style.Theme_Holo_Light);
-            } else {
-                setTheme(android.R.style.Theme_Holo);
-            }
-        } else {
-            if (App.getState().settings().theme() == 0) {
-                setTheme(android.R.style.Theme_Material_Light);
-            } else {
-                setTheme(android.R.style.Theme_Material);
-            }
-        }
-
         setContentView(R.layout.main);
-
 
         initVoice();
         setRecognizerParam();
         setTtsParam();
 
-        tvTips = (TextView) findViewById(R.id.tvTips);
-        etShow = (EditText) findViewById(R.id.etShow);
+        mIatDialog.setParameter("asr_sch", "1");
+        mIatDialog.setParameter("nlp_version", "2.0");
 
-        cbStart = (CircleButton) findViewById(R.id.cbStart);
+        // 显示听写对话框
+        mIatDialog.setListener(mRecognizerDialogListener);
+//        mIatDialog.setCanceledOnTouchOutside(false); //设置背景色后就管用了
 
-        cbStart.setOnClickListener(view -> {
+        mIatDialog.setOnDismissListener(dialogInterface -> finish());
+        mIatDialog.show();
 
-            mIatDialog.setParameter("asr_sch", "1");
-            mIatDialog.setParameter("nlp_version", "2.0");
 
-            // 显示听写对话框
-            mIatDialog.setListener(mRecognizerDialogListener);
-            mIatDialog.show();
-        });
+
+//        tvTips = (TextView) findViewById(R.id.tvTips);
+//        etShow = (EditText) findViewById(R.id.etShow);
+//
+//        cbStart = (CircleButton) findViewById(R.id.cbStart);
+//
+//        cbStart.setOnClickListener(view -> {
+//
+//            mIatDialog.setParameter("asr_sch", "1");
+//            mIatDialog.setParameter("nlp_version", "2.0");
+//
+//            // 显示听写对话框
+//            mIatDialog.setListener(mRecognizerDialogListener);
+//            mIatDialog.show();
+//        });
 
     }
 
@@ -170,10 +171,10 @@ public class MainActivity extends Activity {
         @Override
         public void onInit(int code) {
             Log.d(TAG, "InitListener init() code = " + code);
-            Toast.makeText(MainActivity.this,"InitListener init() code = " + code,Toast.LENGTH_SHORT).show();
+//            Toast.makeText(MainActivity.this,"InitListener init() code = " + code,Toast.LENGTH_SHORT).show();
             if (code != ErrorCode.SUCCESS) {
 //                showTip("初始化失败,错误码："+code);
-                Log.d(TAG, "初始化失败,错误码："+code);
+//                Log.d(TAG, "初始化失败,错误码："+code);
             } else {
                 // 初始化成功，之后可以调用startSpeaking方法
                 // 注：有的开发者在onCreate方法中创建完合成对象之后马上就调用startSpeaking进行合成，
@@ -312,7 +313,7 @@ public class MainActivity extends Activity {
 
                 final String jsonString = results.getResultString();
 
-                etShow.append(jsonString);
+//                etShow.append(jsonString);
 
                 try {
 
@@ -320,12 +321,27 @@ public class MainActivity extends Activity {
 
                     textOrig = root.getString("text");
 
-                    etShow.append(textOrig);
+//                    etShow.append(textOrig);
+                    showTip(textOrig);
 
                     if (textOrig.contains("设置")){
 
                         openSettings();
                         mTts.startSpeaking("好的，以为您打开设置。",null);
+
+                        return;
+                    }else if (textOrig.contains("取消")){
+
+                        App.dispatch(new Action<>(Actions.Alarm.DISMISS)); //turn off alarm
+                        App.dispatch(new Action<>(Actions.Alarm.OFF));     //stop alarm
+                        mTts.startSpeaking("好的，以为您取消。",null);
+                        return;
+                    }else if (textOrig.contains("帮助")){
+
+                        Intent startIntent = new Intent(MainActivity.this, Help.class);
+                        startActivity(startIntent); // 启动服务
+
+                        mTts.startSpeaking("好的，以为您打开帮助。",null);
 
                         return;
                     }
@@ -338,7 +354,7 @@ public class MainActivity extends Activity {
 
                             service  = root.getString("service");
 
-                            showTip(service);
+//                            showTip(service);
 
                             break;
 
@@ -399,23 +415,25 @@ public class MainActivity extends Activity {
 
                                 speakString = "好的，"+"以为您"+content;
 
-                                tvTips.setText("以为您"+content);
+//                                tvTips.setText("以为您"+content);
 
                             }else if ("reminder".equals(name)){
 
                                 speakString = "好的，"+timeOrig+"提醒您"+content;
 
-                                tvTips.setText(timeOrig+"提醒您"+content);
+//                                tvTips.setText(timeOrig+"提醒您"+content);
 
                             }else if("clock".equals(name)){
 
                                 speakString  = "好的，"+timeOrig+"叫您"+content;
 
-                                tvTips.setText(timeOrig+"叫您"+content);
+//                                tvTips.setText(timeOrig+"叫您"+content);
 
                             }
 
                             mTts.startSpeaking(speakString,null);
+
+                            finish();
 
                             App.dispatch(new Action<>(Actions.Alarm.ON));
                             App.dispatch(new Action<>(Actions.Alarm.SET_AM_PM, true)); // ture is PM, false is AM
@@ -521,6 +539,18 @@ public class MainActivity extends Activity {
 
                             mTts.startSpeaking("抱歉，我没有听清楚，请再说一遍好吗", null);
 
+                            App.insignificanceCount++;
+
+                            showTip(App.insignificanceCount+"");
+
+                            if (App.insignificanceCount%3 == 0){
+
+                                Random random = new Random();
+                                int i = random.nextInt(4);
+                                mTts.startSpeaking(preSetSentence[i], null);
+
+                            }
+
                             break;
                     }
 
@@ -529,7 +559,7 @@ public class MainActivity extends Activity {
                     e.printStackTrace();
                 }
             } else {
-                Log.d("MainActivity", "understander result:null");
+//                Log.d("MainActivity", "understander result:null");
 //                etShow.append("null");
             }
 
