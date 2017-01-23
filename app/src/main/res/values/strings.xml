@@ -11,23 +11,12 @@
     <string name="settings_volume_increase_option">Fade-in sound</string>
     <string name="tv_start_alarm_text">Tap here\nto set alarm</string>
     <string name="help">Help</string>
-    <string name="tip1">你可以这样说\n</string>
-    <string name="tip2">提醒我10分钟后开会\n</string>
-    <string name="tip3">明天早上8点叫我起床\n</string>
-    <string name="tip4">设置一个明天六点钟的闹钟\n</string>
-    <string name="tip5">五点钟叫杨炎起床\n</string>
+    <string name="tip1">You Can Say\n</string>
+    <string name="tip2">Remind me to hold a meeting in 10 minutes\n</string>
+    <string name="tip3">Call me up at 8 tomorrow morning\n</string>
+    <string name="tip4">Set an alarm clock at 6 tomorrow\n</string>
+    <string name="tip5">Call Xiaoming up at 5\n</string>
 
-    <string name="hour">1 hour</string>
-    <string name="hours">%s hours</string>
-    <string name="minute">1 minute</string>
-    <string name="minutes">%s minutes</string>
-
-    <string-array name="alarm_set">
-        <item>This alarm is set for less than 1 minute from now</item>
-        <item>This alarm is set for %1$s from now</item>
-        <item>This alarm is set for %2$s from now</item>
-        <item>This alarm is set for %1$s and %2$s from now</item>
-    </string-array>
     <string-array name="settings_themes">
         <item>Light</item>
         <item>Dark</item>

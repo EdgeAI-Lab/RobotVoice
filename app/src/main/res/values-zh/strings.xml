@@ -2,7 +2,7 @@
 <resources>
     <string name="app_id">57032f50</string>
     <string name="app_name">语音闹钟</string>
-    <string name="leave_feedback">フィードバックを残す</string>
+    <string name="leave_feedback">反馈</string>
     <string name="settings">设置</string>
     <string name="settings_ringtone_option">铃声</string>
     <string name="settings_snap_option">间隔</string>
@@ -23,8 +23,5 @@
         <item>亮</item>
         <item>暗</item>
     </string-array>
-    <string-array name="settings_themes_values" translatable="false">
-        <item>0</item>
-        <item>1</item>
-    </string-array>
+
 </resources>

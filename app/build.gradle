@@ -17,7 +17,7 @@ apply plugin: 'android-apt'
 
 android {
     compileSdkVersion 24
-    buildToolsVersion "24.0.1"
+    buildToolsVersion '24.0.1'
 
     defaultConfig {
         applicationId "com.fhc.robotvoice"
@@ -60,7 +60,6 @@ dependencies {
     provided 'org.immutables:value:2.1.14'
     compile fileTree(include: ['*.jar'], dir: 'libs')
     testCompile 'junit:junit:4.12'
-    compile 'com.android.support:appcompat-v7:24.2.0'
 }
 
 apply from: 'https://raw.github.com/trikita/gradle-android-signing/master/gradle-android-signing.gradle'
