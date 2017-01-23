@@ -26,16 +26,11 @@ public class AlarmController implements Store.Middleware<Action, State> {
         mContext = c;
     }
 
+    private int alarmCode = 0;
+
     @Override
     public void dispatch(Store<Action, State> store, Action action, Store.NextDispatcher<Action> next) {
-        if (action.type == Actions.Alarm.ON) {
-            Calendar c = Calendar.getInstance();
-            c.add(Calendar.MINUTE, 1);
-            store.dispatch(new Action<>(Actions.Alarm.SET_HOUR, c.get(Calendar.HOUR)));
-            store.dispatch(new Action<>(Actions.Alarm.SET_MINUTE, c.get(Calendar.MINUTE)));
-            store.dispatch(new Action<>(Actions.Alarm.SET_AM_PM, c.get(Calendar.AM_PM) == 0));
-        }
-        next.dispatch(action);
+
         if (action.type instanceof Actions.Alarm) {
             Actions.Alarm type = (Actions.Alarm) action.type;
             switch (type) {
@@ -43,14 +38,15 @@ public class AlarmController implements Store.Middleware<Action, State> {
                 case SET_MINUTE:
                 case SET_AM_PM:
                 case RESTART_ALARM:
-                    restartAlarm(store.getState());
+                case ON:
+                    restartAlarm();
                     break;
                 case WAKEUP:
                     wakeupAlarm();
                     break;
                 case DISMISS:
                     dismissAlarm();
-                    restartAlarm(store.getState());
+                    restartAlarm();
                     break;
                 case OFF:
                     cancelAlarm();
@@ -59,10 +55,20 @@ public class AlarmController implements Store.Middleware<Action, State> {
         }
     }
 
-    private void restartAlarm(State state) {
-        Calendar c = state.alarm().nextAlarm();
+    private void restartAlarm() {
+
+        Calendar c = Calendar.getInstance();
+        c.set(Calendar.AM_PM, 0);
+        c.set(Calendar.HOUR, MainActivity.hour);
+        c.set(Calendar.MINUTE, MainActivity.minute);
+        c.set(Calendar.SECOND, 0);
+        c.set(Calendar.MILLISECOND, 0);
+        if (System.currentTimeMillis() >= c.getTimeInMillis()) {
+            c.add(Calendar.DATE, 1);
+        }
+
         Intent intent = new Intent(mContext, AlarmReceiver.class);
-        PendingIntent sender = PendingIntent.getBroadcast(mContext, 0, intent, 0);
+        PendingIntent sender = PendingIntent.getBroadcast(mContext, alarmCode++, intent, 0);
 
         AlarmManager am = (AlarmManager) mContext.getSystemService(Context.ALARM_SERVICE);
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
@@ -80,7 +86,7 @@ public class AlarmController implements Store.Middleware<Action, State> {
                     fmt.format(c.getTime()));
         } else {
             Intent showIntent = new Intent(mContext, MainActivity.class);
-            PendingIntent showOperation = PendingIntent.getActivity(mContext, 0, showIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+            PendingIntent showOperation = PendingIntent.getActivity(mContext, alarmCode++, showIntent, PendingIntent.FLAG_UPDATE_CURRENT);
             AlarmManager.AlarmClockInfo alarmClockInfo = new AlarmManager.AlarmClockInfo(c.getTimeInMillis(), showOperation);
             am.setAlarmClock(alarmClockInfo, sender);
         }

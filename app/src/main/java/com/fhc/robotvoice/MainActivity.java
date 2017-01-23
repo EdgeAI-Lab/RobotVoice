@@ -2,16 +2,11 @@ package com.fhc.robotvoice;
 
 
 import android.app.Activity;
-import android.content.DialogInterface;
 import android.content.Intent;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
-import android.view.View;
 import android.view.Window;
-import android.widget.EditText;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.fhc.alarmManage.Actions;
@@ -34,10 +29,10 @@ import com.iflytek.cloud.ui.RecognizerDialogListener;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.Calendar;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Random;
 
-import at.markushi.ui.CircleButton;
 import trikita.jedux.Action;
 
 public class MainActivity extends Activity {
@@ -57,6 +52,8 @@ public class MainActivity extends Activity {
     private SpeechSynthesizer mTts;  				 // 语音合成对象
     private RecognizerDialog mIatDialog;            // 语音听写UI
 
+    // 用HashMap存储听写结果
+    private HashMap<String, String> mIatResults = new LinkedHashMap<String, String>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -262,7 +259,7 @@ public class MainActivity extends Activity {
         mTts.setParameter(SpeechConstant.PARAMS, null);
         // 根据合成引擎设置相应参数
 
-        mTts.setParameter(SpeechConstant.ENGINE_TYPE, SpeechConstant.TYPE_LOCAL);
+        mTts.setParameter(SpeechConstant.ENGINE_TYPE, SpeechConstant.TYPE_CLOUD);
         // 设置在线合成发音人
         mTts.setParameter(SpeechConstant.VOICE_NAME, "jiajia");
 
@@ -295,101 +292,157 @@ public class MainActivity extends Activity {
      */
     private RecognizerDialogListener mRecognizerDialogListener = new RecognizerDialogListener() {
 
-        private JSONObject root = null;    //获取Json整体对象
-        private String service = null;     //获取service字段
-        private JSONObject answer = null;  //获取answer字段
-        private String answerText = null;  //获取answer字段中的text字段
-        private String dateOrig = null;
-        private JSONObject weatherJsonObject = null;
-        private String textOrig = null;
-        private int hour;
-        private int minute;
-        private String timeOrig;
-        private String speakString;
 
+        /*
+         * 注意：语音识别的过程中会多次调用这个函数，所以请在判断识别完成后，再对识别结果进行操作
+         *
+         */
         public void onResult(RecognizerResult results, boolean isLast) {
 
             if (null != results) {
 
                 final String jsonString = results.getResultString();
 
-//                etShow.append(jsonString);
-
+                String sn = null;
+                // 读取json结果中的sn字段
                 try {
+                    JSONObject resultJson = new JSONObject(results.getResultString());
+                    sn = resultJson.optString("sn");
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
 
-                    root = new JSONObject(jsonString);
+                mIatResults.put(sn, jsonString);
 
-                    textOrig = root.getString("text");
+
+                if (isLast) {
+
+                    StringBuffer resultBuffer = new StringBuffer();
+                    for (String key : mIatResults.keySet()) {
+                        resultBuffer.append(mIatResults.get(key));
+                    }
+                    parseResult(resultBuffer);
+                }
+
+            } else {
+//                Log.d("MainActivity", "understander result:null");
+//                etShow.append("null");
+            }
+
+        }
+
+        /**
+         * 识别回调错误.
+         */
+        public void onError(SpeechError error) {
+//            showTip(error.getPlainDescription(true));
+        }
+
+    };
+
+    public static int hour = 0;
+    public static int minute = 0;
+    /*
+     * 根据语音识别的结果设置闹钟，或者应答
+     */
+    private void parseResult(StringBuffer results) {
+
+        JSONObject root;    //获取Json整体对象
+        String service = null;     //获取service字段
+        JSONObject answer ;  //获取answer字段
+        String answerText ;  //获取answer字段中的text字段
+        String dateOrig = null;
+        JSONObject weatherJsonObject = null;
+        String textOrig ;
+        String timeOrig ;
+        String speakString = null;
+
+        try {
+
+            root = new JSONObject(results.toString());
+
+            textOrig = root.getString("text");
 
 //                    etShow.append(textOrig);
-                    showTip(textOrig);
+//                    showTip(textOrig);
 
-                    if (textOrig.contains("设置")){
+            if (textOrig.contains("设置")){
 
-                        openSettings();
-                        mTts.startSpeaking("好的，以为您打开设置。",null);
+                openSettings();
+                mTts.startSpeaking("好的，以为您打开设置。",null);
 
-                        return;
-                    }else if (textOrig.contains("取消")){
+                return;
+            }else if (textOrig.contains("取消")){
 
-                        App.dispatch(new Action<>(Actions.Alarm.DISMISS)); //turn off alarm
-                        App.dispatch(new Action<>(Actions.Alarm.OFF));     //stop alarm
-                        mTts.startSpeaking("好的，以为您取消。",null);
-                        return;
-                    }else if (textOrig.contains("帮助")){
+                App.dispatch(new Action<>(Actions.Alarm.DISMISS)); //turn off alarm
+                App.dispatch(new Action<>(Actions.Alarm.OFF));     //stop alarm
+                mTts.startSpeaking("好的，以为您取消。",null);
+                return;
+            }else if (textOrig.contains("帮助")){
 
-                        Intent startIntent = new Intent(MainActivity.this, Help.class);
-                        startActivity(startIntent); // 启动服务
+                Intent startIntent = new Intent(MainActivity.this, Help.class);
+                startActivity(startIntent); // 启动服务
 
-                        mTts.startSpeaking("好的，以为您打开帮助。",null);
+                mTts.startSpeaking("好的，以为您打开帮助。",null);
 
-                        return;
-                    }
+                return;
+            }
 
-                    // respond code
-                    int rc = root.getInt("rc");
+            // respond code
+            int rc = root.getInt("rc");
 
-                    switch (rc) {
-                        case 0:
+            switch (rc) {
+                case 0:
 
-                            service  = root.getString("service");
+                    service  = root.getString("service");
 
 //                            showTip(service);
 
-                            break;
+                    break;
 
-                        case 1:
-                            showTip("无效请求");
-                            break;
+                case 1:
+                    showTip("无效请求");
+                    break;
 
-                        case 2:
-                            showTip("服务器内部错误");
-                            break;
+                case 2:
+                    showTip("服务器内部错误");
+                    break;
 
-                        case 3:
-                            showTip("业务操作失败");
-                            break;
+                case 3:
+                    showTip("业务操作失败");
+                    break;
 
-                        case 4:
-                            showTip("文本没有匹配的服务场景");
-                            break;
-                    }
-
-
-                    switch (ServiceName.getServiceName(service)) {
+                case 4:
+                    showTip("文本没有匹配的服务场景");
+                    break;
+            }
 
 
-                        case schedule:
+            switch (ServiceName.getServiceName(service)) {
 
-                            JSONObject schSemantic = root.getJSONObject("semantic");
-                            JSONObject schSolt = schSemantic.getJSONObject("slots");
+                case openQA:
 
-                            String name = schSolt.getString("name");
-                            String content = schSolt.getString("content");
+                    answer = root.getJSONObject("answer");
 
-                            App.remindString = content;
+                    speakString = answer.getString("text");
 
-                            JSONObject schDatatime = schSolt.getJSONObject("datetime");
+//                            showTip(speakString);
+                    mTts.startSpeaking(speakString,null);
+
+                    break;
+
+
+                case schedule:
+
+                    JSONObject schSemantic = root.getJSONObject("semantic");
+                    JSONObject schSolt = schSemantic.getJSONObject("slots");
+
+                    String name = schSolt.getString("name");
+                    String content = schSolt.getString("content");
+
+                    App.remindString = content;
+
+                    JSONObject schDatatime = schSolt.getJSONObject("datetime");
 //
 //                            if (null == schDatatime){
 //
@@ -403,50 +456,52 @@ public class MainActivity extends Activity {
 
 //                            }else{
 
-                                timeOrig = schDatatime.getString("timeOrig");
+                    timeOrig = schDatatime.getString("timeOrig");
 
-                                String time = schDatatime.getString("time");
-                                String a[] = time.split(":");
-                                hour = Integer.valueOf( a[0]);
-                                minute =  Integer.valueOf( a[1]);
+                    String time = schDatatime.getString("time");
+
+                    System.out.print("my alarm time is : " + time);
+                    Toast.makeText(MainActivity.this,"my alarm time is : " + time,Toast.LENGTH_LONG).show();
+
+
+                    String a[] = time.split(":");
+                    hour = Integer.valueOf( a[0]);
+                    minute =  Integer.valueOf( a[1]);
 //                            }
 
-                            if (textOrig.contains("闹钟")){
+                    if (textOrig.contains("闹钟")){
 
-                                speakString = "好的，"+"以为您"+content;
+                        speakString = "好的，"+"已为您"+content;
 
-//                                tvTips.setText("以为您"+content);
+//                                tvTips.setText("已为您"+content);
 
-                            }else if ("reminder".equals(name)){
+                    }else if ("reminder".equals(name)){
 
-                                speakString = "好的，"+timeOrig+"提醒您"+content;
+                        speakString = "好的，"+timeOrig+"提醒您"+content;
 
 //                                tvTips.setText(timeOrig+"提醒您"+content);
 
-                            }else if("clock".equals(name)){
+                    }else if("clock".equals(name)){
 
-                                speakString  = "好的，"+timeOrig+"叫您"+content;
+                        speakString  = "好的，"+timeOrig+"叫您"+content;
 
 //                                tvTips.setText(timeOrig+"叫您"+content);
 
-                            }
+                    }
 
-                            mTts.startSpeaking(speakString,null);
+                    mTts.startSpeaking(speakString,null);
 
-                            finish();
+                    App.dispatch(new Action<>(Actions.Alarm.ON));
 
-                            App.dispatch(new Action<>(Actions.Alarm.ON));
-                            App.dispatch(new Action<>(Actions.Alarm.SET_AM_PM, true)); // ture is PM, false is AM
-                            App.dispatch(new Action<>(Actions.Alarm.SET_HOUR, hour));
-                            App.dispatch(new Action<>(Actions.Alarm.SET_MINUTE, minute));
-                            break;
 
-                        case calc:// 计算
+                    break;
 
-                            answer = root.getJSONObject("answer");
-                            answerText = answer.getString("text");
-                            mTts.startSpeaking(answerText, null);
-                            break;
+                case calc:// 计算
+
+                    answer = root.getJSONObject("answer");
+                    answerText = answer.getString("text");
+                    mTts.startSpeaking(answerText, null);
+                    break;
 
 //                        case weather:// 天气
 //
@@ -510,72 +565,57 @@ public class MainActivity extends Activity {
 //
 //                            break;
 
-                        case baike:// 百科
-                            answer = root.getJSONObject("answer");
-                            answerText = answer.getString("text");
-                            mTts.startSpeaking(answerText, null);
+                case baike:// 百科
+                    answer = root.getJSONObject("answer");
+                    answerText = answer.getString("text");
+                    mTts.startSpeaking(answerText, null);
 
-                            break;
+                    break;
 
-                        case datetime:// 日期
-                            answer = root.getJSONObject("answer");
-                            answerText = answer.getString("text");
-                            mTts.startSpeaking(answerText, null);
-                            break;
+                case datetime:// 日期
+                    answer = root.getJSONObject("answer");
+                    answerText = answer.getString("text");
+                    mTts.startSpeaking(answerText, null);
+                    break;
 
-                        case faq:// 社区问答
-                            answer = root.getJSONObject("answer");
-                            answerText = answer.getString("text");
-                            mTts.startSpeaking(answerText, null);
-                            break;
+                case faq:// 社区问答
+                    answer = root.getJSONObject("answer");
+                    answerText = answer.getString("text");
+                    mTts.startSpeaking(answerText, null);
+                    break;
 
-                        case chat:// 聊天
-                            answer = root.getJSONObject("answer");
-                            answerText = answer.getString("text");
-                            mTts.startSpeaking(answerText, null);
-                            break;
+                case chat:// 聊天
+                    answer = root.getJSONObject("answer");
+                    answerText = answer.getString("text");
+                    mTts.startSpeaking(answerText, null);
+                    break;
 
-                        default:
+                default:
 
-                            mTts.startSpeaking("抱歉，我没有听清楚，请再说一遍好吗", null);
+                    mTts.startSpeaking("抱歉，我没有听清楚，请再说一遍好吗", null);
 
-                            App.insignificanceCount++;
+                    App.insignificanceCount++;
 
-                            showTip(App.insignificanceCount+"");
+//                            showTip(App.insignificanceCount+"");
 
-                            if (App.insignificanceCount%3 == 0){
+                    if (App.insignificanceCount%3 == 0){
 
-                                Random random = new Random();
-                                int i = random.nextInt(4);
-                                mTts.startSpeaking(preSetSentence[i], null);
+                        Random random = new Random();
+                        int i = random.nextInt(4);
+                        mTts.startSpeaking(preSetSentence[i], null);
 
-                            }
-
-                            break;
                     }
 
-                } catch (JSONException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                }
-            } else {
-//                Log.d("MainActivity", "understander result:null");
-//                etShow.append("null");
+                    break;
             }
 
-
-
+        } catch (JSONException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
         }
 
-        /**
-         * 识别回调错误.
-         */
-        public void onError(SpeechError error) {
-//            showTip(error.getPlainDescription(true));
-        }
 
-    };
-
+    }
 
     /**
      * 语义理解回调。
@@ -626,4 +666,9 @@ public class MainActivity extends Activity {
         startActivity(new Intent(this, SettingsActivity.class));
     }
 
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+    }
 }
